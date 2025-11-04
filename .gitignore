@@ -19,8 +19,8 @@
 
 # production
 /build
-/src-tauri
-/tauri
+src-tauri
+tauri
 rustup-init.exe
 pnpm-lock.yaml
 .pnpm-debug.log
