@@ -250,7 +250,7 @@ export default function Home() {
       <DashboardHeader
         invoiceCount={invoices.length}
         totalAmount={totalAmount}
-        onCreateNew={() => canCreateInvoice && setCurrentPage("create")}
+        onCreateNew={() => setCurrentPage("create")}
         onSettings={() => setCurrentPage("settings")}
         onUserManagement={() => canManageUsers && setCurrentPage("user-management")}
         currentPage={currentPage}
@@ -259,7 +259,7 @@ export default function Home() {
       />
 
       <main className="container mx-auto px-4 py-8">
-        {currentPage === "dashboard" && canViewInvoices && (
+        {currentPage === "dashboard" && (
           <InvoiceList
             invoices={invoices}
             onView={(invoice) => {
@@ -271,7 +271,7 @@ export default function Home() {
           />
         )}
 
-        {currentPage === "create" && canCreateInvoice && (
+        {currentPage === "create"  && (
           <CreateInvoiceForm onSave={handleCreateInvoice} onCancel={() => setCurrentPage("dashboard")} />
         )}
 

@@ -26,12 +26,29 @@ export class InvoiceStorage {
     }
   }
 
-  static generateInvoiceNumber(): string {
-    let counter = this.getFromStorage(INVOICE_COUNTER_KEY, 0)
-    counter += 1
-    this.setToStorage(INVOICE_COUNTER_KEY, counter)
-    return `TRN-${String(counter).padStart(6, "0")}`
-  }
+ static generateInvoiceNumber(): string {
+  const settings = this.getSettings()
+
+  // في حال لم يوجد format في الإعدادات
+  const format = settings.invoiceNumberFormat || "TRN-{number}"
+
+  // counter
+  let counter = this.getFromStorage(INVOICE_COUNTER_KEY, 0)
+  counter += 1
+  this.setToStorage(INVOICE_COUNTER_KEY, counter)
+
+  // تاريخ
+  const now = new Date()
+
+  // استبدال المتغيرات في الصيغة
+  return format
+    .replace("{number}", String(counter).padStart(6, "0"))
+    .replace("{unit}", settings.weightUnit?.toUpperCase() || "")        // ← ✅ يستخدم من الإعدادات
+    .replace("{year}", now.getFullYear().toString())
+    .replace("{month}", String(now.getMonth() + 1).padStart(2, "0"))
+    .replace("{day}", String(now.getDate()).padStart(2, "0"))
+}
+
 
   static saveInvoice(invoice: InvoiceFormData): Invoice {
     const invoices = this.getInvoices()

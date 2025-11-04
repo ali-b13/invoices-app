@@ -31,10 +31,10 @@ export class InvoiceValidator {
       })
     }
 
-    if ((data.axles || 0) <= 0) {
+    if (!data.axles?.trim()) {
       errors.push({
         field: "axles",
-        message: "عدد المحاور يجب أن يكون أكبر من صفر",
+        message: "عدد المحاور مطلوب",
       })
     }
 

@@ -151,7 +151,7 @@ export class DocxGenerator {
     const mainTableRows = [
       new TableRow({
         children: [
-          createStyledCell("رقم المنتج", true, AlignmentType.RIGHT),
+          createStyledCell("رقم السند", true, AlignmentType.RIGHT),
           createStyledCell(invoice.invoiceNumber?.toString() || ""),
           createStyledCell("التاريخ والوقت", true, AlignmentType.RIGHT),
           createStyledCell(formatArabicDate(invoice.createdAt)),
@@ -183,9 +183,9 @@ export class DocxGenerator {
             true,
             AlignmentType.RIGHT
           ),
-          createStyledCell(`${invoice.allowedWeightTotal} طن`),
+          createStyledCell(`${invoice.allowedWeightTotal} ${invoice.allowedLoadWeightUnit}`),
           createStyledCell("وزن الحمولة المسموح به", true, AlignmentType.RIGHT),
-          createStyledCell(`${invoice.allowedLoadWeight} طن`),
+          createStyledCell(`${invoice.allowedLoadWeight} ${invoice.allowedLoadWeightUnit}`),
         ],
       }),
       // Row 5
@@ -194,7 +194,7 @@ export class DocxGenerator {
           createStyledCell("الرسوم", true, AlignmentType.RIGHT),
           createStyledCell(`${formatCurrency(invoice.fee)} ريال`),
           createStyledCell("الوزن الفعلي", true, AlignmentType.RIGHT),
-          createStyledCell(`${invoice.emptyWeight} طن`),
+          createStyledCell(`${invoice.emptyWeight} ${invoice.allowedLoadWeightUnit}`),
         ],
       }),
       // Row 6
@@ -203,7 +203,7 @@ export class DocxGenerator {
           createStyledCell("الغرامة", true, AlignmentType.RIGHT),
           createStyledCell(`${formatCurrency(invoice.penalty)} ريال`),
           createStyledCell("الوزن الزائد", true, AlignmentType.RIGHT),
-          createStyledCell(`${invoice.overweight} طن`),
+          createStyledCell(`${invoice.overweight} ${invoice.allowedLoadWeightUnit}`),
         ],
       }),
       // Row 7

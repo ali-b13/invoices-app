@@ -2,7 +2,7 @@
 import type { Invoice } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { ArrowLeft, Printer, Download, FileText, Edit } from "lucide-react";
+import { Printer, Download, FileText, ArrowRight, Lock } from "lucide-react";
 import { useState } from "react";
 import { UserStorage } from "@/lib/user-storage";
 
@@ -23,7 +23,12 @@ export function InvoicePreview({
   );
   const currentUser = UserStorage.getCurrentUser();
   const collectorName = currentUser?.name || "Unknown";
-  const penaltyText = `غراسة (10000) ريال على كل طن زائد فوق الوزن المسموح به قابل للمضاعفة في حالة تجاوز الوزن الزائد 30% من وزن الحمولة المسموح به وفقاً للمركبة أو السائق أو السائق والمركبة معاً`;
+  
+  // Check permissions
+  const canPrintInvoice = UserStorage.hasPermission("print_invoice");
+  const canDownloadInvoice = UserStorage.hasPermission("download_invoice");
+  
+  const penaltyText = `غرامة (10000) ريال على كل طن زائد فوق الوزن المسموح به قابل للمضاعفة في حالة تجاوز الوزن الزائد 30% من وزن الحمولة المسموح به وفقاً للمركبة أو السائق أو السائق والمركبة معاً`;
 
   const formatArabicDate = (date: Date) => {
     return new Date(date).toLocaleDateString("ar-YE", {
@@ -42,7 +47,20 @@ export function InvoicePreview({
     });
   };
 
+  const handlePrint = () => {
+    if (!canPrintInvoice) {
+      alert("ليس لديك صلاحية طباعة الفواتير");
+      return;
+    }
+    onPrint();
+  };
+
   const handleDownload = async (format: "docx" | "pdf") => {
+    if (!canDownloadInvoice) {
+      alert("ليس لديك صلاحية تحميل الفواتير");
+      return;
+    }
+
     setIsDownloading(true);
     setDownloadFormat(format);
     try {
@@ -67,47 +85,113 @@ export function InvoicePreview({
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-2">
           <Button variant="ghost" size="sm" onClick={onBack}>
-            <ArrowLeft className="h-4 w-4" />
+            <ArrowRight className="h-4 w-4" />
+            <h2 className="font-bold">رجوع</h2>
           </Button>
-          <h2 className="text-2xl font-bold">عرض الفاتورة</h2>
         </div>
 
         <div className="flex gap-2 flex-wrap">
-    
-          <Button
-            onClick={onPrint}
-            className="gap-2 bg-transparent"
-            variant="outline"
-          >
-            <Printer className="h-4 w-4" />
-            <span className="hidden sm:inline">طباعة</span>
-          </Button>
-          <Button
-            onClick={() => handleDownload("pdf")}
-            disabled={isDownloading && downloadFormat === "pdf"}
-            className="gap-2"
-            variant="outline"
-          >
-            <FileText className="h-4 w-4" />
-            <span className="hidden sm:inline">
-              {isDownloading && downloadFormat === "pdf"
-                ? "جاري..."
-                : "تحميل PDF"}
-            </span>
-          </Button>
-          <Button
-            onClick={() => handleDownload("docx")}
-            disabled={isDownloading && downloadFormat === "docx"}
-            className="gap-2"
-            variant="outline"
-          >
-            <Download className="h-4 w-4" />
-            <span className="hidden sm:inline">
-              {isDownloading && downloadFormat === "docx"
-                ? "جاري..."
-                : "تحميل DOCX"}
-            </span>
-          </Button>
+          {/* Print Button - Only show if user has permission */}
+          {canPrintInvoice ? (
+            <Button
+              onClick={handlePrint}
+              className="gap-2 bg-transparent"
+              variant="outline"
+            >
+              <Printer className="h-4 w-4" />
+              <span className="hidden sm:inline">طباعة</span>
+            </Button>
+          ) : (
+            <Button
+              className="gap-2 bg-transparent opacity-50 cursor-not-allowed"
+              variant="outline"
+              disabled
+              title="ليس لديك صلاحية الطباعة"
+            >
+              <Lock className="h-4 w-4" />
+              <span className="hidden sm:inline">غير مسموح</span>
+            </Button>
+          )}
+
+          {/* PDF Download Button - Only show if user has permission */}
+          {canDownloadInvoice ? (
+            <Button
+              onClick={() => handleDownload("pdf")}
+              disabled={isDownloading && downloadFormat === "pdf"}
+              className="gap-2"
+              variant="outline"
+            >
+              <FileText className="h-4 w-4" />
+              <span className="hidden sm:inline">
+                {isDownloading && downloadFormat === "pdf"
+                  ? "جاري..."
+                  : "تحميل PDF"}
+              </span>
+            </Button>
+          ) : (
+            <Button
+              className="gap-2 opacity-50 cursor-not-allowed"
+              variant="outline"
+              disabled
+              title="ليس لديك صلاحية التحميل"
+            >
+              <Lock className="h-4 w-4" />
+              <span className="hidden sm:inline">غير مسموح</span>
+            </Button>
+          )}
+
+          {/* DOCX Download Button - Only show if user has permission */}
+          {canDownloadInvoice ? (
+            <Button
+              onClick={() => handleDownload("docx")}
+              disabled={isDownloading && downloadFormat === "docx"}
+              className="gap-2"
+              variant="outline"
+            >
+              <Download className="h-4 w-4" />
+              <span className="hidden sm:inline">
+                {isDownloading && downloadFormat === "docx"
+                  ? "جاري..."
+                  : "تحميل DOCX"}
+              </span>
+            </Button>
+          ) : (
+            <Button
+              className="gap-2 opacity-50 cursor-not-allowed"
+              variant="outline"
+              disabled
+              title="ليس لديك صلاحية التحميل"
+            >
+              <Lock className="h-4 w-4" />
+              <span className="hidden sm:inline">غير مسموح</span>
+            </Button>
+          )}
+        </div>
+      </div>
+
+      {/* Permission Status Banner */}
+      <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+        <div className="flex items-center justify-between">
+          <div className="text-right">
+            <p className="font-semibold text-blue-800">{currentUser?.name}</p>
+            <p className="text-sm text-blue-600">
+              {canPrintInvoice && canDownloadInvoice 
+                ? "مسموح لك بطباعة وتحميل الفواتير"
+                : canPrintInvoice 
+                ? "مسموح لك بالطباعة فقط"
+                : canDownloadInvoice 
+                ? "مسموح لك بالتحميل فقط"
+                : "غير مسموح لك بطباعة أو تحميل الفواتير"
+              }
+            </p>
+          </div>
+          <div className={`px-3 py-1 rounded-full text-sm font-medium ${
+            canPrintInvoice || canDownloadInvoice 
+              ? "bg-green-100 text-green-800" 
+              : "bg-red-100 text-red-800"
+          }`}>
+            {canPrintInvoice || canDownloadInvoice ? "✓ مسموح" : "✗ غير مسموح"}
+          </div>
         </div>
       </div>
 
@@ -126,7 +210,7 @@ export function InvoicePreview({
             <tbody>
               <tr>
                 <td className="border border-black p-2 font-bold text-right w-1/4">
-                  رقم المنتج
+                  رقم السند
                 </td>
                 <td className="border border-black p-2 text-center w-1/4">
                   {invoice.invoiceNumber}
@@ -171,13 +255,13 @@ export function InvoicePreview({
                   الوزن المسموح به كاملاً
                 </td>
                 <td className="border border-black p-2 text-center">
-                  {invoice.allowedWeightTotal} طن
+                  {invoice.allowedWeightTotal} {invoice.allowedLoadWeightUnit}
                 </td>
                 <td className="border border-black p-2 font-bold text-right">
                   وزن الحمولة المسموح به
                 </td>
                 <td className="border border-black p-2 text-center">
-                  {invoice.allowedLoadWeight} طن
+                  {invoice.allowedLoadWeight} {invoice.allowedLoadWeightUnit}
                 </td>
               </tr>
               <tr>
@@ -191,7 +275,7 @@ export function InvoicePreview({
                   الوزن الفعلي
                 </td>
                 <td className="border border-black p-2 text-center">
-                  {invoice.emptyWeight} طن
+                  {invoice.emptyWeight} {invoice.allowedLoadWeightUnit}
                 </td>
               </tr>
               <tr>
@@ -205,7 +289,7 @@ export function InvoicePreview({
                   الوزن الزائد
                 </td>
                 <td className="border border-black p-2 text-center">
-                  {invoice.overweight} طن
+                  {invoice.overweight} {invoice.allowedLoadWeightUnit}
                 </td>
               </tr>
               <tr>

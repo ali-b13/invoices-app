@@ -5,8 +5,10 @@ export interface Invoice {
   driverName: string
   vehicleType: string
   vehicleNumber: string
+  allowedLoadWeightUnit: "kg" | "ton" 
+
   allowedWeightTotal: number
-  axles: number
+  axles: string
   allowedLoadWeight: number
   fee: number
   penalty: number
@@ -27,14 +29,16 @@ export interface InvoiceFormData extends Omit<Invoice, "id"  | "createdAt"> {
 }
 
 export interface Settings {
-  defaultScale: string
-  username:string
-  invoiceNumberFormat: string
+  defaultScale: string;
+  username: string;
+  invoiceNumberFormat: string;
+  weightUnit: "kg" | "ton" 
   printerPreferences?: {
-    defaultPrinter?: string
-    paperSize?: "A4" | "A5"
-  }
+    defaultPrinter?: string;
+    paperSize?: "A4" | "A5";
+  };
 }
+
 
 export type UserRole = "admin" | "user"
 

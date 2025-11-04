@@ -65,7 +65,7 @@ export class PDFGenerator {
         const rows = [
           // Row 1
           {
-            rightLabel: "رقم المنتج",
+            rightLabel: "رقم السند",
             rightValue: invoice.invoiceNumber || "",
             leftLabel: "التاريخ والوقت", 
             leftValue: this.formatArabicDate(invoice.createdAt)
@@ -87,23 +87,23 @@ export class PDFGenerator {
           // Row 4
           {
             rightLabel: "الوزن المسموح به كاملاً",
-            rightValue: `${invoice.allowedWeightTotal} طن`,
+            rightValue: `${invoice.allowedWeightTotal} ${invoice.allowedLoadWeightUnit}`,
             leftLabel: "وزن الحمولة المسموح به",
-            leftValue: `${invoice.allowedLoadWeight} طن`
+            leftValue: `${invoice.allowedLoadWeight} ${invoice.allowedLoadWeightUnit}`
           },
           // Row 5
           {
             rightLabel: "الرسوم",
             rightValue: `${this.formatCurrency(invoice.fee)} ريال`,
             leftLabel: "الوزن الفعلي",
-            leftValue: `${invoice.emptyWeight} طن`
+            leftValue: `${invoice.emptyWeight} ${invoice.allowedLoadWeightUnit}`
           },
           // Row 6
           {
             rightLabel: "الغرامة",
             rightValue: `${this.formatCurrency(invoice.penalty)} ريال`,
             leftLabel: "الوزن الزائد",
-            leftValue: `${invoice.overweight} طن`
+            leftValue: `${invoice.overweight} ${invoice.allowedLoadWeightUnit}`
           },
           // Row 7
           {

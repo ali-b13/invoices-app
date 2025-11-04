@@ -6,14 +6,14 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Search, Printer, Eye, Trash2 } from "lucide-react"
+import { Search, Eye, Trash2, Lock, AlertCircle } from "lucide-react"
+import { UserStorage } from "@/lib/user-storage"
 
 interface InvoiceListProps {
   invoices: Invoice[]
   onView: (invoice: Invoice) => void
   onDelete: (id: string) => void
   canDelete?: boolean
-
 }
 
 export function InvoiceList({
@@ -26,6 +26,36 @@ export function InvoiceList({
   const [filterPeriod, setFilterPeriod] = useState<"all" | "today" | "week">("all")
   const [currentPage, setCurrentPage] = useState(1)
   const itemsPerPage = 10
+
+  // Check permissions
+  const canViewInvoices = UserStorage.hasPermission("view_invoices")
+  const canDeleteInvoice = UserStorage.hasPermission("delete_invoice") && canDelete
+  const currentUser = UserStorage.getCurrentUser()
+
+  // If user doesn't have view permission, show access denied
+  if (!canViewInvoices) {
+    return (
+      <Card className="border-0 shadow-lg">
+        <CardHeader className="border-b from-primary to-primary/80 text-primary-foreground">
+          <CardTitle className="text-right">قائمة الفواتير</CardTitle>
+        </CardHeader>
+        <CardContent className="p-8 text-center">
+          <div className="flex flex-col items-center justify-center space-y-4">
+            <Lock className="h-16 w-16 text-red-500" />
+            <div className="space-y-2">
+              <h3 className="text-xl font-bold text-red-600">وصول مرفوض</h3>
+              <p className="text-muted-foreground">
+                ليس لديك صلاحية عرض الفواتير
+              </p>
+              <p className="text-sm text-muted-foreground">
+                يلزم الحصول على صلاحية "عرض الفواتير" لعرض هذه الصفحة
+              </p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    )
+  }
 
   const filtered = useMemo(() => {
     let result = invoices
@@ -75,12 +105,48 @@ export function InvoiceList({
     })
   }
 
+  const handleView = (invoice: Invoice) => {
+    onView(invoice)
+  }
+
+  const handleDelete = (id: string) => {
+    if (!canDeleteInvoice) {
+      alert("ليس لديك صلاحية حذف الفواتير")
+      return
+    }
+    onDelete(id)
+  }
+
   return (
     <Card className="border-0 shadow-lg">
-      <CardHeader className="border-b  from-primary to-primary/80 text-primary-foreground">
+      <CardHeader className="border-b from-primary to-primary/80 text-primary-foreground">
         <CardTitle className="text-right">قائمة الفواتير</CardTitle>
       </CardHeader>
       <CardContent className="p-6">
+        {/* Permission Status Banner */}
+        <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+          <div className="flex items-center justify-between">
+            <div className="text-right">
+              <p className="font-semibold text-blue-800">{currentUser?.name}</p>
+              <p className="text-sm text-blue-600">
+                {canViewInvoices && canDeleteInvoice 
+                  ? "مسموح لك بعرض وحذف الفواتير"
+                  : canViewInvoices 
+                  ? "مسموح لك بعرض الفواتير فقط"
+                  : "غير مسموح لك بعرض الفواتير"
+                }
+              </p>
+            </div>
+            <div className={`px-3 py-1 rounded-full text-sm font-medium ${
+              canViewInvoices 
+                ? "bg-green-100 text-green-800" 
+                : "bg-red-100 text-red-800"
+            }`}>
+              {canViewInvoices ? "✓ مسموح" : "✗ غير مسموح"}
+            </div>
+          </div>
+        </div>
+
         {/* Search and Filters */}
         <div className="space-y-4 mb-6">
           <div className="flex gap-3 flex-wrap">
@@ -140,19 +206,36 @@ export function InvoiceList({
                       </TableCell>
                       <TableCell className="text-center">
                         <div className="flex gap-2 justify-center">
-                          <Button size="sm" variant="ghost" onClick={() => onView(invoice)} title="عرض">
+                          {/* View Button - Always shown if user can view invoices */}
+                          <Button 
+                            size="sm" 
+                            variant="ghost" 
+                            onClick={() => handleView(invoice)} 
+                            title="عرض"
+                          >
                             <Eye className="h-4 w-4" />
                           </Button>
                          
-                          {canDelete && (
+                          {/* Delete Button - Only shown if user has delete permission */}
+                          {canDeleteInvoice ? (
                             <Button
                               size="sm"
                               variant="ghost"
-                              onClick={() => onDelete(invoice.id)}
+                              onClick={() => handleDelete(invoice.id)}
                               title="حذف"
                               className="text-destructive hover:text-destructive hover:bg-destructive/10"
                             >
                               <Trash2 className="h-4 w-4" />
+                            </Button>
+                          ) : (
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              disabled
+                              title="ليس لديك صلاحية الحذف"
+                              className="opacity-50 cursor-not-allowed"
+                            >
+                              <Lock className="h-4 w-4" />
                             </Button>
                           )}
                         </div>
