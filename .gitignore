@@ -21,7 +21,11 @@
 /build
 /src-tauri
 rustup-init.exe
-pnpm-lock.ymal
+pnpm-lock.yaml
+.pnpm-debug.log
+pnpm-workspace.yaml
+node_modules/
+
 
 # misc
 .DS_Store
