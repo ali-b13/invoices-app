@@ -19,6 +19,9 @@
 
 # production
 /build
+/src-tauri
+rustup-init.exe
+pnpm-lock.ymal
 
 # misc
 .DS_Store
