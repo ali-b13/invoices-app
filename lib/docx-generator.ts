@@ -51,10 +51,8 @@ export class DocxGenerator {
     };
 
     // Generate penalty text similar to your React component
-    const penaltyText =
-      invoice.overweight > 0
-        ? `غرامة (10000) ريال على كل طن زائد فوق الوزن المسموح به قابل للمضاعفة في حالة تجاوز الوزن الزائد من وزن الحمولة المسموح به وفقاً للمركبة أو السائق أو السائق والمركبة معاً`
-        : "";
+    const penaltyText = `غرامة (10000) ريال على كل طن زائد فوق الوزن المسموح به قابل للمضاعفة في حالة تجاوز الوزن الزائد من وزن الحمولة المسموح به وفقاً للمركبة أو السائق أو السائق والمركبة معاً`
+    
 
     const borderStyle = {
       top: { color: "000000", space: 1, style: BorderStyle.SINGLE, size: 6 },
@@ -183,9 +181,9 @@ export class DocxGenerator {
             true,
             AlignmentType.RIGHT
           ),
-          createStyledCell(`${invoice.allowedWeightTotal} ${invoice.allowedLoadWeightUnit}`),
+          createStyledCell(`${invoice.allowedWeightTotal}`),
           createStyledCell("وزن الحمولة المسموح به", true, AlignmentType.RIGHT),
-          createStyledCell(`${invoice.allowedLoadWeight} ${invoice.allowedLoadWeightUnit}`),
+          createStyledCell(`${invoice.allowedLoadWeight}`),
         ],
       }),
       // Row 5
@@ -194,7 +192,7 @@ export class DocxGenerator {
           createStyledCell("الرسوم", true, AlignmentType.RIGHT),
           createStyledCell(`${formatCurrency(invoice.fee)} ريال`),
           createStyledCell("الوزن الفعلي", true, AlignmentType.RIGHT),
-          createStyledCell(`${invoice.emptyWeight} ${invoice.allowedLoadWeightUnit}`),
+          createStyledCell(`${invoice.emptyWeight} `),
         ],
       }),
       // Row 6
@@ -203,7 +201,7 @@ export class DocxGenerator {
           createStyledCell("الغرامة", true, AlignmentType.RIGHT),
           createStyledCell(`${formatCurrency(invoice.penalty)} ريال`),
           createStyledCell("الوزن الزائد", true, AlignmentType.RIGHT),
-          createStyledCell(`${invoice.overweight} ${invoice.allowedLoadWeightUnit}`),
+          createStyledCell(`${invoice.overweight} `),
         ],
       }),
       // Row 7
@@ -376,7 +374,7 @@ export class DocxGenerator {
         }),
         // Second row: Values / Spaces
         new TableRow({
-          children: [collectorName, "", ""].map(
+          children: ["خالد صالح الديني", "", ""].map(
             (value) =>
               new TableCell({
                 children: [

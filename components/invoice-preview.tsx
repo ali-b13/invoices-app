@@ -4,7 +4,9 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Printer, Download, FileText, ArrowRight, Lock } from "lucide-react";
 import { useState } from "react";
-import { UserStorage } from "@/lib/user-storage";
+import { HybridStorage } from "@/lib/hybrid-storage";
+import { formatCurrencyEN, formatDateTime } from "@/lib/formatters";
+import { PDFGenerator } from "@/lib/pdf-generator";
 
 interface InvoicePreviewProps {
   invoice: Invoice;
@@ -21,31 +23,18 @@ export function InvoicePreview({
   const [downloadFormat, setDownloadFormat] = useState<"docx" | "pdf" | null>(
     null
   );
-  const currentUser = UserStorage.getCurrentUser();
-  const collectorName = currentUser?.name || "Unknown";
+  const currentUser = HybridStorage.getCurrentUser();
+  const collectorName ="خالد صالح الديني"
   
   // Check permissions
-  const canPrintInvoice = UserStorage.hasPermission("print_invoice");
-  const canDownloadInvoice = UserStorage.hasPermission("download_invoice");
+  const canPrintInvoice = currentUser?.permissions.includes("print_invoice");
+  const canDownloadInvoice = currentUser?.permissions.includes("download_invoice");
   
   const penaltyText = `غرامة (10000) ريال على كل طن زائد فوق الوزن المسموح به قابل للمضاعفة في حالة تجاوز الوزن الزائد 30% من وزن الحمولة المسموح به وفقاً للمركبة أو السائق أو السائق والمركبة معاً`;
 
-  const formatArabicDate = (date: Date) => {
-    return new Date(date).toLocaleDateString("ar-YE", {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-  };
+  
 
-  const formatCurrency = (amount: number) => {
-    return amount.toLocaleString("ar-YE", {
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    });
-  };
+ 
 
   const handlePrint = () => {
     if (!canPrintInvoice) {
@@ -65,8 +54,7 @@ export function InvoicePreview({
     setDownloadFormat(format);
     try {
       if (format === "pdf") {
-        const { PDFGenerator } = await import("@/lib/pdf-generator");
-        await PDFGenerator.downloadInvoiceAsPDF(invoice);
+          PDFGenerator.downloadInvoiceAsPDF(invoice);
       } else {
         const { DocxGenerator } = await import("@/lib/docx-generator");
         await DocxGenerator.downloadInvoiceAsDocx(invoice, collectorName);
@@ -169,31 +157,7 @@ export function InvoicePreview({
         </div>
       </div>
 
-      {/* Permission Status Banner */}
-      <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
-        <div className="flex items-center justify-between">
-          <div className="text-right">
-            <p className="font-semibold text-blue-800">{currentUser?.name}</p>
-            <p className="text-sm text-blue-600">
-              {canPrintInvoice && canDownloadInvoice 
-                ? "مسموح لك بطباعة وتحميل الفواتير"
-                : canPrintInvoice 
-                ? "مسموح لك بالطباعة فقط"
-                : canDownloadInvoice 
-                ? "مسموح لك بالتحميل فقط"
-                : "غير مسموح لك بطباعة أو تحميل الفواتير"
-              }
-            </p>
-          </div>
-          <div className={`px-3 py-1 rounded-full text-sm font-medium ${
-            canPrintInvoice || canDownloadInvoice 
-              ? "bg-green-100 text-green-800" 
-              : "bg-red-100 text-red-800"
-          }`}>
-            {canPrintInvoice || canDownloadInvoice ? "✓ مسموح" : "✗ غير مسموح"}
-          </div>
-        </div>
-      </div>
+     
 
       <Card className="p-8 bg-white text-blue-900 font-extrabold">
         <div className="space-y-4">
@@ -219,7 +183,7 @@ export function InvoicePreview({
                   التاريخ والوقت
                 </td>
                 <td className="border border-black p-2 text-center w-1/4">
-                  {formatArabicDate(invoice.createdAt)}
+                  {formatDateTime(new Date(invoice.createdAt))}
                 </td>
               </tr>
               <tr>
@@ -255,13 +219,13 @@ export function InvoicePreview({
                   الوزن المسموح به كاملاً
                 </td>
                 <td className="border border-black p-2 text-center">
-                  {invoice.allowedWeightTotal} {invoice.allowedLoadWeightUnit}
+                  {invoice.allowedWeightTotal}
                 </td>
                 <td className="border border-black p-2 font-bold text-right">
                   وزن الحمولة المسموح به
                 </td>
                 <td className="border border-black p-2 text-center">
-                  {invoice.allowedLoadWeight} {invoice.allowedLoadWeightUnit}
+                  {invoice.allowedLoadWeight}
                 </td>
               </tr>
               <tr>
@@ -269,13 +233,13 @@ export function InvoicePreview({
                   الرسوم
                 </td>
                 <td className="border border-black p-2 text-center">
-                  {formatCurrency(invoice.fee)} ريال
+                  {formatCurrencyEN(invoice.fee)}
                 </td>
                 <td className="border border-black p-2 font-bold text-right">
                   الوزن الفعلي
                 </td>
                 <td className="border border-black p-2 text-center">
-                  {invoice.emptyWeight} {invoice.allowedLoadWeightUnit}
+                  {invoice.emptyWeight}
                 </td>
               </tr>
               <tr>
@@ -283,13 +247,13 @@ export function InvoicePreview({
                   الغرامة
                 </td>
                 <td className="border border-black p-2 text-center">
-                  {formatCurrency(invoice.penalty)} ريال
+                  {formatCurrencyEN(invoice.penalty)}
                 </td>
                 <td className="border border-black p-2 font-bold text-right">
                   الوزن الزائد
                 </td>
                 <td className="border border-black p-2 text-center">
-                  {invoice.overweight} {invoice.allowedLoadWeightUnit}
+                  {invoice.overweight}
                 </td>
               </tr>
               <tr>
@@ -297,13 +261,13 @@ export function InvoicePreview({
                   الخصم
                 </td>
                 <td className="border border-black p-2 text-center">
-                  {formatCurrency(invoice.discount)} ريال
+                  {formatCurrencyEN(invoice.discount)}
                 </td>
                 <td className="border border-black p-2 font-bold text-right">
                   المبلغ المستحق
                 </td>
                 <td className="border border-black p-2 text-center">
-                  {formatCurrency(invoice.payableAmount)} ريال
+                  {formatCurrencyEN(invoice.payableAmount)}
                 </td>
               </tr>
               <tr>
@@ -317,7 +281,7 @@ export function InvoicePreview({
                   المبلغ الصافي
                 </td>
                 <td className="border border-black p-2 text-center">
-                  {formatCurrency(invoice.netAmount)} ريال
+                  {formatCurrencyEN(invoice.netAmount)} 
                 </td>
               </tr>
 
@@ -334,7 +298,6 @@ export function InvoicePreview({
               )}
 
               {/* ✅ Note Section - label + text side by side */}
-              {invoice.note && (
                 <tr>
                   <td className="border border-black p-2 font-bold text-right w-1/4">
                     ملاحظة
@@ -343,10 +306,9 @@ export function InvoicePreview({
                     colSpan={3}
                     className="border border-black p-2 text-right"
                   >
-                    {invoice.note}
+                    {invoice.note||""} 
                   </td>
                 </tr>
-              )}
             </tbody>
           </table>
 

@@ -1,13 +1,12 @@
 "use client"
 
-import type React from "react"
-
-import { useState } from "react"
-import { UserStorage } from "@/lib/user-storage"
+import { useState, useEffect } from "react"
+import type { FormEvent } from "react"
+import { HybridStorage } from "@/lib/hybrid-storage"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { AlertCircle } from "lucide-react"
+import { AlertCircle, Wifi, WifiOff } from "lucide-react"
 
 interface LoginPageProps {
   onLoginSuccess: () => void
@@ -18,14 +17,28 @@ export function LoginPage({ onLoginSuccess }: LoginPageProps) {
   const [password, setPassword] = useState("")
   const [error, setError] = useState("")
   const [isLoading, setIsLoading] = useState(false)
+  const [isOnline, setIsOnline] = useState(HybridStorage.isOnline)
 
-  const handleLogin = async (e: React.FormEvent) => {
+  useEffect(() => {
+    const handleOnline = () => setIsOnline(true)
+    const handleOffline = () => setIsOnline(false)
+
+    window.addEventListener("online", handleOnline)
+    window.addEventListener("offline", handleOffline)
+
+    return () => {
+      window.removeEventListener("online", handleOnline)
+      window.removeEventListener("offline", handleOffline)
+    }
+  }, [])
+
+  const handleLogin = async (e: FormEvent) => {
     e.preventDefault()
     setError("")
     setIsLoading(true)
 
     try {
-      const user = UserStorage.login(username, password)
+      const user = await HybridStorage.login(username, password)
       console.log(user,'user')
       if (user) {
         onLoginSuccess()
@@ -43,8 +56,13 @@ export function LoginPage({ onLoginSuccess }: LoginPageProps) {
     <div className="min-h-screen bg-linear-to-br from-primary/10 to-secondary/10 flex items-center justify-center p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="bg-primary/10 text-center">
-          <CardTitle className="text-2xl">نظام إدارة الفواتير</CardTitle>
-          <p className="text-sm text-muted-foreground mt-2">تسجيل الدخول</p>
+          <div className="flex items-center justify-center gap-2 mb-2">
+            <CardTitle className="text-2xl">نظام إدارة الفواتير</CardTitle>
+            {isOnline ? <Wifi className="w-4 h-4 text-green-600" /> : <WifiOff className="w-4 h-4 text-red-600" />}
+          </div>
+          <p className="text-sm text-muted-foreground mt-2">
+            {isOnline ? "تسجيل الدخول - متصل" : "تسجيل الدخول - غير متصل"}
+          </p>
         </CardHeader>
         <CardContent className="p-6">
           <form onSubmit={handleLogin} className="space-y-4">
@@ -84,11 +102,7 @@ export function LoginPage({ onLoginSuccess }: LoginPageProps) {
               {isLoading ? "جاري تسجيل الدخول..." : "تسجيل الدخول"}
             </Button>
 
-            <div className="mt-4 p-3 bg-muted/50 rounded-md text-xs text-muted-foreground space-y-1 text-right">
-              <p className="font-semibold">بيانات تجريبية:</p>
-              <p>Admin: admin / admin123</p>
-              <p>User: user / user123</p>
-            </div>
+           
           </form>
         </CardContent>
       </Card>

@@ -2,6 +2,7 @@
 import { Button } from "@/components/ui/button"
 import { FileText, Settings, Plus, UserCircle, LogOut, Shield } from "lucide-react"
 import type { User } from "@/lib/types"
+import { formatCurrencyEN } from "@/lib/formatters"
 
 interface DashboardHeaderProps {
   invoiceCount: number
@@ -45,7 +46,7 @@ export function DashboardHeader({
                   </div>
                   <div className="text-center">
                     <div className="text-xs text-muted-foreground">المبلغ الإجمالي</div>
-                    <div className="font-semibold text-lg">{totalAmount.toLocaleString("ar-YE")}</div>
+                    <div className="font-semibold text-lg">{formatCurrencyEN(totalAmount)}</div>
                   </div>
                 </div>
 

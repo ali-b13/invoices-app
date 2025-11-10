@@ -1,12 +1,14 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { UserStorage } from "@/lib/user-storage";
-import type { User, Permission } from "@/lib/types";
+import { useState, useEffect, useCallback } from "react";
+import { HybridStorage } from "@/lib/hybrid-storage"; // Use HybridStorage
+import type { User, Permission, UserFormData } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
+import { v4 as uuidv4 } from "uuid";
+
 import {
   Table,
   TableBody,
@@ -22,7 +24,8 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Plus, Trash2, Shield, ArrowRight, AlertCircle, Lock, Loader2 } from "lucide-react";
+import { Plus, Trash2, Shield, ArrowRight, Lock, Loader2 } from "lucide-react";
+import { AdminFields } from "./admin-fields";
 
 interface UserManagementProps {
   onClose: () => void;
@@ -46,18 +49,27 @@ export function UserManagement({ onClose }: UserManagementProps) {
   const [newUsername, setNewUsername] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
-  const [selectedPermissions, setSelectedPermissions] = useState<Permission[]>([]);
+  const [selectedPermissions, setSelectedPermissions] = useState<Permission[]>(
+    []
+  );
   const [isUpdatingPermissions, setIsUpdatingPermissions] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isAddingUser, setIsAddingUser] = useState(false);
 
-  const currentUser = UserStorage.getCurrentUser();
-  const canManageUsers = UserStorage.hasPermission("manage_users");
+  const currentUser = HybridStorage.getCurrentUser();
+  const canManageUsers =
+    currentUser?.permissions.includes("manage_users") ?? false;
 
-  useEffect(() => {
+  const fetchUsers = useCallback(async () => {
     if (canManageUsers) {
-      setUsers(UserStorage.getAllUsers());
+      const allUsers = await HybridStorage.getAllUsers();
+      setUsers(allUsers);
     }
   }, [canManageUsers]);
+
+  useEffect(() => {
+    fetchUsers();
+  }, [fetchUsers]);
 
   // If user doesn't have permission, show access denied message
   if (!canManageUsers) {
@@ -69,7 +81,7 @@ export function UserManagement({ onClose }: UserManagementProps) {
             <h2 className="font-bold">رجوع</h2>
           </Button>
         </div>
-        
+
         <Card>
           <CardContent className="p-8 text-center">
             <div className="flex flex-col items-center justify-center space-y-4">
@@ -93,17 +105,33 @@ export function UserManagement({ onClose }: UserManagementProps) {
     );
   }
 
-  const handleAddUser = () => {
-    if (newUsername.trim() && newPassword.trim()) {
-      UserStorage.addUser(newUsername, newPassword, "user", newName);
-      setUsers(UserStorage.getAllUsers());
+  const handleAddUser = async () => {
+    if (!newUsername.trim() || !newPassword.trim() || !newName.trim()) {
+      alert("يرجى ملء جميع الحقول: الاسم المعروض، اسم المستخدم، وكلمة المرور.");
+      return;
+    }
+
+    setIsAddingUser(true);
+    try {
+      const userData: UserFormData = {
+        name: newName,
+        username: newUsername,
+        password: newPassword,
+      };
+      await HybridStorage.addUser(userData);
+      await fetchUsers(); // Refresh list
       setNewUsername("");
       setName("");
       setNewPassword("");
+    } catch (error) {
+      console.error("خطأ في إضافة المستخدم:", error);
+      alert("حدث خطأ أثناء إضافة المستخدم.");
+    } finally {
+      setIsAddingUser(false);
     }
   };
 
-  const handleDeleteUser = (userId: string) => {
+  const handleDeleteUser = async (userId: string) => {
     // Prevent users from deleting themselves
     if (currentUser && currentUser.id === userId) {
       alert("لا يمكنك حذف حسابك الخاص");
@@ -111,15 +139,20 @@ export function UserManagement({ onClose }: UserManagementProps) {
     }
 
     // Prevent non-admin users from deleting admin users
-    const userToDelete = users.find(u => u.id === userId);
+    const userToDelete = users.find((u) => u.id === userId);
     if (userToDelete?.role === "admin" && currentUser?.role !== "admin") {
       alert("لا يمكنك حذف مستخدم مسؤول");
       return;
     }
 
     if (confirm("هل أنت متأكد من حذف هذا المستخدم؟")) {
-      UserStorage.deleteUser(userId);
-      setUsers(UserStorage.getAllUsers());
+      try {
+        await HybridStorage.deleteUser(userId);
+        await fetchUsers(); // Refresh list
+      } catch (error) {
+        console.error("خطأ في حذف المستخدم:", error);
+        alert("حدث خطأ أثناء حذف المستخدم.");
+      }
     }
   };
 
@@ -133,14 +166,14 @@ export function UserManagement({ onClose }: UserManagementProps) {
     }
 
     setIsUpdatingPermissions(true);
-    
+
     try {
-      // Simulate API call delay for better UX
-      await new Promise(resolve => setTimeout(resolve, 800));
-      
-      UserStorage.updateUserPermissions(selectedUser.id, selectedPermissions);
-      setUsers(UserStorage.getAllUsers());
-      
+      await HybridStorage.updateUserPermissions(
+        selectedUser.id,
+        selectedPermissions
+      );
+      await fetchUsers(); // Refresh list
+
       // Close dialog and reset states
       setIsDialogOpen(false);
       setSelectedUser(null);
@@ -155,7 +188,7 @@ export function UserManagement({ onClose }: UserManagementProps) {
 
   const handleTogglePermission = (permission: Permission) => {
     if (isUpdatingPermissions) return;
-    
+
     setSelectedPermissions((prev) =>
       prev.includes(permission)
         ? prev.filter((p) => p !== permission)
@@ -178,7 +211,7 @@ export function UserManagement({ onClose }: UserManagementProps) {
   };
 
   // Filter out current user from the list to prevent self-deletion
-  const displayUsers = users.filter(user => user.id !== currentUser?.id);
+  const displayUsers = users.filter((user) => user.id !== currentUser?.id);
 
   return (
     <div className="space-y-6">
@@ -188,7 +221,9 @@ export function UserManagement({ onClose }: UserManagementProps) {
           <h2 className="font-bold">رجوع</h2>
         </Button>
       </div>
-
+      {currentUser?.role === "admin" && (
+        <AdminFields currentUser={currentUser} />
+      )}
       <div className="flex items-center gap-2">
         <Shield className="h-6 w-6 text-primary" />
         <h2 className="text-2xl font-bold">إدارة المستخدمين والصلاحيات</h2>
@@ -238,14 +273,28 @@ export function UserManagement({ onClose }: UserManagementProps) {
               />
             </div>
             <div className="flex items-end">
-              <Button onClick={handleAddUser} className="w-full gap-2">
-                <Plus className="h-4 w-4" />
-                إضافة
+              <Button
+                onClick={handleAddUser}
+                className="w-full gap-2"
+                disabled={isAddingUser}
+              >
+                {isAddingUser ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    جاري الإضافة...
+                  </>
+                ) : (
+                  <>
+                    <Plus className="h-4 w-4" />
+                    إضافة
+                  </>
+                )}
               </Button>
             </div>
           </div>
           <p className="text-sm text-muted-foreground text-right">
-            ⓘ الاسم المعروض: يظهر في الفواتير والمستندات | اسم المستخدم: للتسجيل والدخول فقط
+            ⓘ الاسم المعروض: يظهر في الفواتير والمستندات | اسم المستخدم: للتسجيل
+            والدخول فقط
           </p>
         </CardContent>
       </Card>
@@ -273,57 +322,71 @@ export function UserManagement({ onClose }: UserManagementProps) {
                   className={!user.isActive ? "opacity-50" : ""}
                 >
                   <TableCell className="text-right flex gap-2 justify-end">
-                    <Dialog open={isDialogOpen && selectedUser?.id === user.id} >
-                      <DialogTrigger asChild>
+                    <Dialog
+                      open={isDialogOpen && selectedUser?.id === user.id}
+                      onOpenChange={handleCloseDialog}
+                    >
                         <Button
                           variant="outline"
                           size="sm"
                           onClick={() => handleOpenDialog(user)}
-                          disabled={user.role === "admin" && currentUser?.role !== "admin"}
+                          disabled={
+                            user.role === "admin" &&
+                            currentUser?.role !== "admin"
+                          }
                         >
                           تعديل
                         </Button>
-                      </DialogTrigger>
+                    
                       <DialogContent className="max-w-md">
                         <DialogHeader>
                           <DialogTitle className="text-right">
                             تعديل صلاحيات: {selectedUser?.username}
                           </DialogTitle>
                         </DialogHeader>
-                        
+
                         {/* Loading Overlay */}
                         {isUpdatingPermissions && (
                           <div className="absolute inset-0 bg-background/80 backdrop-blur-sm flex items-center justify-center rounded-lg z-10">
                             <div className="text-center">
                               <Loader2 className="h-8 w-8 animate-spin mx-auto mb-2 text-primary" />
-                              <p className="text-sm text-muted-foreground">جاري تحديث الصلاحيات...</p>
+                              <p className="text-sm text-muted-foreground">
+                                جاري تحديث الصلاحيات...
+                              </p>
                             </div>
                           </div>
                         )}
 
-                        <div className="space-y-3 max-h-96 overflow-y-auto">
+                        <div className="space-y-2">
                           {ALL_PERMISSIONS.map((perm) => (
                             <div
                               key={perm.value}
                               className={`flex items-center gap-3 p-2 rounded ${
-                                isUpdatingPermissions 
-                                  ? "opacity-50 cursor-not-allowed" 
+                                isUpdatingPermissions
+                                  ? "opacity-50 cursor-not-allowed"
                                   : "hover:bg-muted cursor-pointer"
                               }`}
                             >
                               <Checkbox
-                                checked={selectedPermissions.includes(perm.value)}
-                                onCheckedChange={() => handleTogglePermission(perm.value)}
+                                checked={selectedPermissions.includes(
+                                  perm.value
+                                )}
+                                onCheckedChange={() =>
+                                  handleTogglePermission(perm.value)
+                                }
                                 id={perm.value}
                                 disabled={
-                                  isUpdatingPermissions || 
-                                  (selectedUser?.role === "admin" && currentUser?.role !== "admin")
+                                  isUpdatingPermissions ||
+                                  (selectedUser?.role === "admin" &&
+                                    currentUser?.role !== "admin")
                                 }
                               />
                               <label
                                 htmlFor={perm.value}
                                 className={`text-sm flex-1 text-right ${
-                                  isUpdatingPermissions ? "cursor-not-allowed" : "cursor-pointer"
+                                  isUpdatingPermissions
+                                    ? "cursor-not-allowed"
+                                    : "cursor-pointer"
                                 }`}
                               >
                                 {perm.label}
@@ -331,14 +394,15 @@ export function UserManagement({ onClose }: UserManagementProps) {
                             </div>
                           ))}
                         </div>
-                        
+
                         <div className="flex gap-2 mt-4">
                           <Button
                             onClick={handleSavePermissions}
                             className="flex-1 gap-2"
                             disabled={
-                              isUpdatingPermissions || 
-                              (selectedUser?.role === "admin" && currentUser?.role !== "admin")
+                              isUpdatingPermissions ||
+                              (selectedUser?.role === "admin" &&
+                                currentUser?.role !== "admin")
                             }
                           >
                             {isUpdatingPermissions ? (
@@ -350,7 +414,7 @@ export function UserManagement({ onClose }: UserManagementProps) {
                               "حفظ التغييرات"
                             )}
                           </Button>
-                          
+
                           <Button
                             variant="outline"
                             onClick={handleCloseDialog}
@@ -361,12 +425,14 @@ export function UserManagement({ onClose }: UserManagementProps) {
                         </div>
                       </DialogContent>
                     </Dialog>
-                    
+
                     <Button
                       variant="destructive"
                       size="sm"
                       onClick={() => handleDeleteUser(user.id)}
-                      disabled={user.role === "admin" && currentUser?.role !== "admin"}
+                      disabled={
+                        user.role === "admin" && currentUser?.role !== "admin"
+                      }
                     >
                       <Trash2 className="h-4 w-4 text-white" />
                     </Button>
@@ -385,8 +451,12 @@ export function UserManagement({ onClose }: UserManagementProps) {
                       {user.role === "admin" ? "مسؤول" : "مستخدم"}
                     </span>
                   </TableCell>
-                  <TableCell className="text-right font-mono text-sm">{user.username}</TableCell>
-                  <TableCell className="text-right font-semibold">{user.name}</TableCell>
+                  <TableCell className="text-right font-mono text-sm">
+                    {user.username}
+                  </TableCell>
+                  <TableCell className="text-right font-semibold">
+                    {user.name}
+                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>

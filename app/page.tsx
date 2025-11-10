@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect, useRef, useCallback } from "react"
 import { LoginPage } from "@/components/login-page"
 import { InvoiceList } from "@/components/invoice-list"
 import { DashboardHeader } from "@/components/dashboard-header"
@@ -8,9 +8,9 @@ import { CreateInvoiceForm } from "@/components/create-invoice-form"
 import { InvoicePreview } from "@/components/invoice-preview"
 import { SettingsPanel } from "@/components/settings-panel"
 import { UserManagement } from "@/components/user-managment"
-import { InvoiceStorage } from "@/lib/invoice-storage"
-import { UserStorage } from "@/lib/user-storage"
-import type { Invoice, User } from "@/lib/types"
+import { HybridStorage } from "@/lib/hybrid-storage"
+import type { Invoice, InvoiceFormData, User } from "@/lib/types"
+import { PWAInstallPrompt } from "@/components/pwa-install-prompt"
 
 type PageType = "dashboard" | "create" | "preview" | "settings" | "user-management"
 
@@ -20,32 +20,108 @@ export default function Home() {
   const [currentPage, setCurrentPage] = useState<PageType>("dashboard")
   const [invoices, setInvoices] = useState<Invoice[]>([])
   const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null)
+  const [isOnline, setIsOnline] = useState(HybridStorage.isOnline)
+  const [isEditing, setIsEditing] = useState(false)
   const printContentRef = useRef<HTMLDivElement>(null)
+ const [totalInvoices,setTotalInvoices]=useState(0)
+const fetchInvoices = useCallback(async (page: number = 1) => {
+  const result = await HybridStorage.getInvoices({}, { page, limit: 10 })
+  setInvoices(result.invoices)
+  setTotalInvoices(result.total)
+}, [])
 
   useEffect(() => {
-    UserStorage.initializeDefaultUsers()
-    const user = UserStorage.getCurrentUser()
-    setCurrentUser(user)
-    if (user) {
-      const stored = InvoiceStorage.getInvoices()
-      setInvoices(stored)
-    }
-    setIsLoading(false)
-  }, [])
+    const initializeApp = async () => {
+      try {
+        HybridStorage.init()
 
-  const handleLoginSuccess = () => {
-    const user = UserStorage.getCurrentUser()
+        const user = HybridStorage.getCurrentUser()
+        setCurrentUser(user)
+
+        if (user) {
+          await fetchInvoices()
+        }
+
+        const handleOnline = async () => {
+          console.log("[Home] Went online - syncing data")
+          setIsOnline(true)
+          await fetchInvoices()
+        }
+
+        const handleOffline = () => {
+          console.log("[Home] Went offline")
+          setIsOnline(false)
+        }
+
+        window.addEventListener("online", handleOnline)
+        window.addEventListener("offline", handleOffline)
+
+        return () => {
+          window.removeEventListener("online", handleOnline)
+          window.removeEventListener("offline", handleOffline)
+        }
+      } catch (error) {
+        console.error("[Home] Initialization error:", error)
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    initializeApp()
+  }, [fetchInvoices])
+
+  const handleLoginSuccess = async () => {
+    const user = HybridStorage.getCurrentUser()
     setCurrentUser(user)
-    const stored = InvoiceStorage.getInvoices()
-    setInvoices(stored)
+    await fetchInvoices()
   }
 
-  const handleLogout = () => {
-    UserStorage.logout()
+  const handleLogout = async () => {
+    HybridStorage.logout()
     setCurrentUser(null)
     setCurrentPage("dashboard")
     setInvoices([])
     setSelectedInvoice(null)
+  }
+
+  const handleSaveInvoice = async (invoiceData: InvoiceFormData): Promise<Invoice> => {
+    let invoice: Invoice
+    if (isEditing && selectedInvoice) {
+      const updated = await HybridStorage.updateInvoice(selectedInvoice.id, invoiceData)
+      if (!updated) throw new Error("Failed to update invoice")
+      invoice = updated
+      setIsEditing(false)
+    } else {
+      invoice = await HybridStorage.saveInvoice(invoiceData)
+    }
+
+    await fetchInvoices()
+
+    setCurrentPage("preview")
+    setSelectedInvoice(invoice)
+    return invoice
+  }
+
+  const handleEditInvoice = (invoice: Invoice) => {
+    setSelectedInvoice(invoice)
+    setIsEditing(true)
+    setCurrentPage("create")
+  }
+
+  const handleDeleteInvoice = async (id: string) => {
+    const canDeleteInvoice = currentUser?.permissions.includes("delete_invoice") ?? false
+    if (!canDeleteInvoice) {
+      alert("ليس لديك صلاحية حذف الفواتير")
+      return
+    }
+    if (confirm("هل أنت متأكد من حذف هذه الفاتورة؟")) {
+      await HybridStorage.deleteInvoice(id)
+      await fetchInvoices()
+      if (selectedInvoice?.id === id) {
+        setSelectedInvoice(null)
+        setCurrentPage("dashboard")
+      }
+    }
   }
 
   const canCreateInvoice = currentUser?.permissions.includes("create_invoice") ?? false
@@ -70,51 +146,28 @@ export default function Home() {
     return <LoginPage onLoginSuccess={handleLoginSuccess} />
   }
 
-  const handleCreateInvoice = (invoice: Invoice) => {
-    setInvoices((prev) => [...prev, invoice])
-    setCurrentPage("preview")
-    setSelectedInvoice(invoice)
-  }
-
-  const handleDeleteInvoice = (id: string) => {
-    if (!canDeleteInvoice) {
-      alert("ليس لديك صلاحية حذف الفواتير")
-      return
-    }
-    if (confirm("هل أنت متأكد من حذف هذه الفاتورة؟")) {
-      InvoiceStorage.deleteInvoice(id)
-      setInvoices((prev) => prev.filter((inv) => inv.id !== id))
-    }
-  }
-
   const handlePrintInvoice = async (invoice: Invoice) => {
     if (!canPrintInvoice) {
       alert("ليس لديك صلاحية طباعة الفواتير")
       return
     }
 
-    // Get the current preview invoice content
-    const previewContent = printContentRef.current;
+    const previewContent = printContentRef.current
     if (!previewContent) {
-      console.error("Preview content not found");
-      return;
+      console.error("Preview content not found")
+      return
     }
 
-    // Clone the content to avoid modifying the original
-    const printContent = previewContent.cloneNode(true) as HTMLDivElement;
+    const printContent = previewContent.cloneNode(true) as HTMLDivElement
+    const buttons = printContent.querySelectorAll("button, .flex.gap-2.flex-wrap")
+    buttons.forEach((button) => button.remove())
 
-    // Remove action buttons from the print version
-    const buttons = printContent.querySelectorAll('button, .flex.gap-2.flex-wrap');
-    buttons.forEach(button => button.remove());
-
-    // Create a new window for printing
-    const printWindow = window.open('', '_blank');
+    const printWindow = window.open("", "_blank")
     if (!printWindow) {
-      alert("يرجى السماح بالنوافذ المنبثقة للطباعة");
-      return;
+      alert("يرجى السماح بالنوافذ المنبثقة للطباعة")
+      return
     }
 
-    // Write the HTML content to the print window
     printWindow.document.write(`
       <!DOCTYPE html>
       <html dir="rtl" lang="ar">
@@ -238,19 +291,24 @@ export default function Home() {
         </script>
       </body>
       </html>
-    `);
+    `)
 
-    printWindow.document.close();
+    printWindow.document.close()
   }
 
   const totalAmount = invoices.reduce((sum, inv) => sum + inv.netAmount, 0)
 
   return (
     <div className="min-h-screen bg-background">
+       <PWAInstallPrompt />
       <DashboardHeader
-        invoiceCount={invoices.length}
+        invoiceCount={totalInvoices}
         totalAmount={totalAmount}
-        onCreateNew={() => setCurrentPage("create")}
+        onCreateNew={() => {
+          setSelectedInvoice(null)
+          setIsEditing(false)
+          setCurrentPage("create")
+        }}
         onSettings={() => setCurrentPage("settings")}
         onUserManagement={() => canManageUsers && setCurrentPage("user-management")}
         currentPage={currentPage}
@@ -261,18 +319,27 @@ export default function Home() {
       <main className="container mx-auto px-4 py-8">
         {currentPage === "dashboard" && (
           <InvoiceList
-            invoices={invoices}
+        
             onView={(invoice) => {
               setSelectedInvoice(invoice)
               setCurrentPage("preview")
             }}
+            onEdit={handleEditInvoice}
             onDelete={handleDeleteInvoice}
             canDelete={canDeleteInvoice}
           />
         )}
 
-        {currentPage === "create"  && (
-          <CreateInvoiceForm onSave={handleCreateInvoice} onCancel={() => setCurrentPage("dashboard")} />
+        {currentPage === "create" && (
+          <CreateInvoiceForm
+            onSave={handleSaveInvoice}
+            onCancel={() => {
+              setIsEditing(false)
+              setSelectedInvoice(null)
+              setCurrentPage("dashboard")
+            }}
+            initialData={isEditing ? selectedInvoice : null}
+          />
         )}
 
         {currentPage === "preview" && selectedInvoice && (

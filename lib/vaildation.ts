@@ -24,10 +24,10 @@ export class InvoiceValidator {
     }
 
     // Numeric validations
-    if ((data.allowedWeightTotal || 0) <= 0) {
+    if (!data.allowedWeightTotal?.trim()) {
       errors.push({
         field: "allowedWeightTotal",
-        message: "الوزن المسموح به يجب أن يكون أكبر من صفر",
+        message: "الوزن المسموح به مطلوب",
       })
     }
 
