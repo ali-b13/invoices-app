@@ -174,26 +174,26 @@ export function CreateInvoiceForm({ onSave, onCancel, initialData }: CreateInvoi
   // If user doesn't have permission, show access denied message
   if (!canCreateInvoice) {
     return (
-      <div className="space-y-6">
+      <div className="space-y-4 md:space-y-6">
         <div className="flex items-center gap-2">
           <Button variant="ghost" size="sm" onClick={onCancel}>
             <ArrowLeft className="h-4 w-4" />
           </Button>
-          <h2 className="text-2xl font-bold">إنشاء فاتورة جديدة</h2>
+          <h2 className="text-xl md:text-2xl font-bold">إنشاء فاتورة جديدة</h2>
         </div>
 
         <Card>
-          <div className="p-8 text-center">
-            <div className="flex flex-col items-center justify-center space-y-4">
-              <Lock className="h-16 w-16 text-red-500" />
-              <div className="space-y-2">
-                <h3 className="text-xl font-bold text-red-600">وصول مرفوض</h3>
-                <p className="text-muted-foreground">ليس لديك صلاحية إنشاء فواتير جديدة</p>
-                <p className="text-sm text-muted-foreground">
+          <div className="p-4 md:p-8 text-center">
+            <div className="flex flex-col items-center justify-center space-y-3 md:space-y-4">
+              <Lock className="h-12 w-12 md:h-16 md:w-16 text-red-500" />
+              <div className="space-y-1 md:space-y-2">
+                <h3 className="text-lg md:text-xl font-bold text-red-600">وصول مرفوض</h3>
+                <p className="text-sm md:text-base text-muted-foreground">ليس لديك صلاحية إنشاء فواتير جديدة</p>
+                <p className="text-xs md:text-sm text-muted-foreground">
                   يلزم الحصول على صلاحية "إنشاء فاتورة" لإضافة فواتير جديدة
                 </p>
               </div>
-              <Button onClick={onCancel} variant="outline">
+              <Button onClick={onCancel} variant="outline" className="text-sm">
                 العودة إلى لوحة التحكم
               </Button>
             </div>
@@ -273,286 +273,289 @@ export function CreateInvoiceForm({ onSave, onCancel, initialData }: CreateInvoi
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 md:space-y-6">
       <div className="flex items-center gap-2">
         <Button variant="ghost" size="sm" onClick={onCancel}>
           <ArrowLeft className="h-4 w-4" />
         </Button>
-        <h2 className="text-2xl font-bold">إنشاء فاتورة جديدة</h2>
+        <h2 className="text-xl md:text-2xl font-bold">إنشاء فاتورة جديدة</h2>
       </div>
 
       {/* User Info Banner */}
-      <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+      <div className="p-3 md:p-4 bg-blue-50 border border-blue-200 rounded-lg">
         <div className="flex items-center justify-between">
           <div className="text-right">
-            <p className="font-semibold text-blue-800">{currentUser?.name}</p>
-            <p className="text-sm text-blue-600">مسموح لك بإنشاء فواتير جديدة</p>
+            <p className="font-semibold text-blue-800 text-sm md:text-base">{currentUser?.name}</p>
+            <p className="text-xs md:text-sm text-blue-600">مسموح لك بإنشاء فواتير جديدة</p>
           </div>
-          <div className="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-medium">✓ مسموح</div>
+          <div className="bg-green-100 text-green-800 px-2 py-1 md:px-3 md:py-1 rounded-full text-xs md:text-sm font-medium">✓ مسموح</div>
         </div>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-6">
-        <Card className="p-8 bg-white text-blue-900 font-extrabold">
-          <div className="space-y-4">
+      <form onSubmit={handleSubmit} className="space-y-4 md:space-y-6">
+        <Card className="p-4 md:p-8 bg-white text-blue-900 font-extrabold">
+          <div className="space-y-3 md:space-y-4">
             <div className="text-center">
-              <h1 className="text-lg font-bold mb-1">الجمهورية اليمنية - مكتب النقل وادي حضرموت</h1>
-              <p className="text-base font-bold">ميزان العبر</p>
+              <h1 className="text-sm md:text-lg font-bold mb-1">الجمهورية اليمنية - مكتب النقل وادي حضرموت</h1>
+              <p className="text-xs md:text-base font-bold">ميزان العبر</p>
             </div>
 
-            <table className="w-full border-collapse border border-black text-sm">
-              <tbody>
-                <tr>
-                  <td className="border border-black p-2 font-bold text-right w-1/4">رقم السند</td>
-                  <td className="border border-black p-2 text-center w-1/4">
-                    <input
-                      name="invoiceNumber"
-                      value={formData.invoiceNumber || ""}
-                      onChange={(e) =>
-                        setFormData((prev) => ({
-                          ...prev,
-                          invoiceNumber: e.target.value,
-                        }))
-                      }
-                      className="w-full bg-transparent text-center border-none outline-none font-extrabold text-blue-900"
-                      readOnly
-                    />
-                  </td>
-                  <td className="border border-black p-2 font-bold text-right w-1/4">التاريخ والوقت</td>
-                  <td className="border border-black p-2 text-center w-1/4">
-                    <input
-                      name="createdAt"
-                      type="text"
-                      value={formData.createdAt ? formatDateTime(new Date(formData.createdAt)) : formatDateTime(new Date())}
-                      onChange={handleDateTimeChange}
-                      className="w-full bg-transparent text-center border-none outline-none font-extrabold text-blue-900"
-                      placeholder="م 10:30:14 2-11-2025"
-                    />
-                  </td>
-                </tr>
-                <tr>
-                  <td className="border border-black p-2 font-bold text-right">اسم السائق</td>
-                  <td className="border border-black p-2 text-center">
-                    <input
-                      name="driverName"
-                      value={formData.driverName || ""}
-                      onChange={handleChange}
-                      className="w-full bg-transparent text-center border-none outline-none font-extrabold text-blue-900"
-                      required
-                      placeholder="أدخل اسم السائق"
-                    />
-                  </td>
-                  <td className="border border-black p-2 font-bold text-right">رقم المركبة</td>
-                  <td className="border border-black p-2 text-center">
-                    <input
-                      name="vehicleNumber"
-                      value={formData.vehicleNumber || ""}
-                      onChange={handleChange}
-                      className="w-full bg-transparent text-center border-none outline-none font-extrabold text-blue-900"
-                      required
-                      placeholder="أدخل رقم المركبة"
-                    />
-                  </td>
-                </tr>
-                <tr>
-                  <td className="border border-black p-2 font-bold text-right">نوع المركبة</td>
-                  <td className="border border-black p-2 text-center">
-                    <input
-                      name="vehicleType"
-                      value={formData.vehicleType || ""}
-                      onChange={handleChange}
-                      className="w-full bg-transparent text-center border-none outline-none font-extrabold text-blue-900"
-                      required
-                      placeholder="أدخل نوع المركبة"
-                    />
-                  </td>
-                  <td className="border border-black p-2 font-bold text-right">عدد المحاور</td>
-                  <td className="border border-black p-2 text-center">
-                    <input
-                      name="axles"
-                      type="text"
-                      value={formData.axles || ""}
-                      onChange={handleChange}
-                      className="w-full bg-transparent text-center border-none outline-none font-extrabold text-blue-900"
-                      required
-                      placeholder="0"
-                    />
-                  </td>
-                </tr>
-                <tr>
-                  <td className="border border-black p-2 font-bold text-right">الوزن المسموح به كاملاً</td>
-                  <td className="border border-black p-2 text-center">
-                    <input
-                      name="allowedWeightTotal"
-                      type="text"
-                      value={formData.allowedWeightTotal || "0"}
-                      onChange={handleChange}
-                      className="w-full bg-transparent text-center border-none outline-none font-extrabold text-blue-900"
-                      required
-                      placeholder="0"
-                    />
-                  </td>
-                  <td className="border border-black p-2 font-bold text-right">وزن الحمولة المسموح به</td>
-                  <td className="border border-black p-2 text-center">
-                    <input
-                      name="allowedLoadWeight"
-                      type="text"
-                      value={formData.allowedLoadWeight || "0"}
-                      onChange={handleChange}
-                      className="w-full bg-transparent text-center border-none outline-none font-extrabold text-blue-900"
-                      required
-                      placeholder="0"
-                    />
-                  </td>
-                </tr>
-                <tr>
-                  <td className="border border-black p-2 font-bold text-right">الرسوم</td>
-                  <td className="border border-black p-2 text-center">
-                    <div className="flex items-center justify-center gap-1">
+            {/* Mobile Responsive Table */}
+            <div className="overflow-x-auto">
+              <table className="w-full border-collapse border border-black text-xs md:text-sm min-w-[600px]">
+                <tbody>
+                  <tr>
+                    <td className="border border-black p-1 md:p-2 font-bold text-right w-1/4">رقم السند</td>
+                    <td className="border border-black p-1 md:p-2 text-center w-1/4">
                       <input
-                        name="fee"
-                        type="number"
-                        value={formData.fee || 0}
+                        name="invoiceNumber"
+                        value={formData.invoiceNumber || ""}
+                        onChange={(e) =>
+                          setFormData((prev) => ({
+                            ...prev,
+                            invoiceNumber: e.target.value,
+                          }))
+                        }
+                        className="w-full bg-transparent text-center border-none outline-none font-extrabold text-blue-900 text-xs md:text-sm"
+                        readOnly
+                      />
+                    </td>
+                    <td className="border border-black p-1 md:p-2 font-bold text-right w-1/4">التاريخ والوقت</td>
+                    <td className="border border-black p-1 md:p-2 text-center w-1/4">
+                      <input
+                        name="createdAt"
+                        type="text"
+                        value={formData.createdAt ? formatDateTime(new Date(formData.createdAt)) : formatDateTime(new Date())}
+                        onChange={handleDateTimeChange}
+                        className="w-full bg-transparent text-center border-none outline-none font-extrabold text-blue-900 text-xs md:text-sm"
+                        placeholder="م 10:30:14 2-11-2025"
+                      />
+                    </td>
+                  </tr>
+                  <tr>
+                    <td className="border border-black p-1 md:p-2 font-bold text-right">اسم السائق</td>
+                    <td className="border border-black p-1 md:p-2 text-center">
+                      <input
+                        name="driverName"
+                        value={formData.driverName || ""}
                         onChange={handleChange}
-                        className="w-24 bg-transparent text-center border-none outline-none font-extrabold text-blue-900"
+                        className="w-full bg-transparent text-center border-none outline-none font-extrabold text-blue-900 text-xs md:text-sm"
+                        required
+                        placeholder="أدخل اسم السائق"
+                      />
+                    </td>
+                    <td className="border border-black p-1 md:p-2 font-bold text-right">رقم المركبة</td>
+                    <td className="border border-black p-1 md:p-2 text-center">
+                      <input
+                        name="vehicleNumber"
+                        value={formData.vehicleNumber || ""}
+                        onChange={handleChange}
+                        className="w-full bg-transparent text-center border-none outline-none font-extrabold text-blue-900 text-xs md:text-sm"
+                        required
+                        placeholder="أدخل رقم المركبة"
+                      />
+                    </td>
+                  </tr>
+                  <tr>
+                    <td className="border border-black p-1 md:p-2 font-bold text-right">نوع المركبة</td>
+                    <td className="border border-black p-1 md:p-2 text-center">
+                      <input
+                        name="vehicleType"
+                        value={formData.vehicleType || ""}
+                        onChange={handleChange}
+                        className="w-full bg-transparent text-center border-none outline-none font-extrabold text-blue-900 text-xs md:text-sm"
+                        required
+                        placeholder="أدخل نوع المركبة"
+                      />
+                    </td>
+                    <td className="border border-black p-1 md:p-2 font-bold text-right">عدد المحاور</td>
+                    <td className="border border-black p-1 md:p-2 text-center">
+                      <input
+                        name="axles"
+                        type="text"
+                        value={formData.axles || ""}
+                        onChange={handleChange}
+                        className="w-full bg-transparent text-center border-none outline-none font-extrabold text-blue-900 text-xs md:text-sm"
+                        required
                         placeholder="0"
                       />
-                      <span className="font-extrabold text-blue-900">ريال</span>
-                    </div>
-                  </td>
-                  <td className="border border-black p-2 font-bold text-right">الوزن الفعلي</td>
-                  <td className="border border-black p-2 text-center">
-                    <input
-                      name="emptyWeight"
-                      type="text"
-                      value={formData.emptyWeight || "0"}
-                      onChange={handleChange}
-                      className="w-full bg-transparent text-center border-none outline-none font-extrabold text-blue-900"
-                      placeholder="0"
-                    />
-                  </td>
-                </tr>
-                <tr>
-                  <td className="border border-black p-2 font-bold text-right">الغرامة</td>
-                  <td className="border border-black p-2 text-center">
-                    <div className="flex items-center justify-center gap-1">
+                    </td>
+                  </tr>
+                  <tr>
+                    <td className="border border-black p-1 md:p-2 font-bold text-right">الوزن المسموح به كاملاً</td>
+                    <td className="border border-black p-1 md:p-2 text-center">
                       <input
-                        name="penalty"
-                        type="number"
-                        value={formData.penalty || 0}
+                        name="allowedWeightTotal"
+                        type="text"
+                        value={formData.allowedWeightTotal || "0"}
                         onChange={handleChange}
-                        className="w-24 bg-transparent text-center border-none outline-none font-extrabold text-blue-900"
+                        className="w-full bg-transparent text-center border-none outline-none font-extrabold text-blue-900 text-xs md:text-sm"
+                        required
                         placeholder="0"
                       />
-                      <span className="font-extrabold text-blue-900">ريال</span>
-                    </div>
-                  </td>
-                  <td className="border border-black p-2 font-bold text-right">الوزن الزائد</td>
-                  <td className="border border-black p-2 text-center">
-                    <input
-                      name="overweight"
-                      type="text"
-                      value={formData.overweight || "0"}
-                      onChange={handleChange}
-                      className="w-full bg-transparent text-center border-none outline-none font-extrabold text-blue-900"
-                      placeholder="0"
-                    />
-                  </td>
-                </tr>
-                <tr>
-                  <td className="border border-black p-2 font-bold text-right">الخصم</td>
-                  <td className="border border-black p-2 text-center">
-                    <div className="flex items-center justify-center gap-1">
+                    </td>
+                    <td className="border border-black p-1 md:p-2 font-bold text-right">وزن الحمولة المسموح به</td>
+                    <td className="border border-black p-1 md:p-2 text-center">
                       <input
-                        name="discount"
-                        type="number"
-                        value={formData.discount || 0}
+                        name="allowedLoadWeight"
+                        type="text"
+                        value={formData.allowedLoadWeight || "0"}
                         onChange={handleChange}
-                        className="w-24 bg-transparent text-center border-none outline-none font-extrabold text-blue-900"
+                        className="w-full bg-transparent text-center border-none outline-none font-extrabold text-blue-900 text-xs md:text-sm"
+                        required
                         placeholder="0"
                       />
-                      <span className="font-extrabold text-blue-900">ريال</span>
-                    </div>
-                  </td>
-                  <td className="border border-black p-2 font-bold text-right">المبلغ المستحق</td>
-                  <td className="border border-black p-2 text-center">
-                    <div className="flex items-center justify-center gap-1">
-                      <span className="font-extrabold text-blue-900">
-                        {formatCurrency(formData.payableAmount || 0)}
-                      </span>
-                      <span className="font-extrabold text-blue-900">ريال</span>
-                    </div>
-                  </td>
-                </tr>
-                <tr>
-                  <td className="border border-black p-2 font-bold text-right">النوع</td>
-                  <td className="border border-black p-2 text-center">
-                    <input
-                      name="type"
-                      value={formData.type || ""}
-                      onChange={handleChange}
-                      className="w-full bg-transparent text-center border-none outline-none font-extrabold text-blue-900"
-                      placeholder="أدخل النوع"
-                    />
-                  </td>
-                  <td className="border border-black p-2 font-bold text-right">المبلغ الصافي</td>
-                  <td className="border border-black p-2 text-center">
-                    <div className="flex items-center justify-center gap-1">
-                      <span className="font-extrabold text-blue-900">{formatCurrency(formData.netAmount || 0)}</span>
-                      <span className="font-extrabold text-blue-900">ريال</span>
-                    </div>
-                  </td>
-                </tr>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td className="border border-black p-1 md:p-2 font-bold text-right">الرسوم</td>
+                    <td className="border border-black p-1 md:p-2 text-center">
+                      <div className="flex items-center justify-center gap-1">
+                        <input
+                          name="fee"
+                          type="number"
+                          value={formData.fee || 0}
+                          onChange={handleChange}
+                          className="w-16 md:w-24 bg-transparent text-center border-none outline-none font-extrabold text-blue-900 text-xs md:text-sm"
+                          placeholder="0"
+                        />
+                        <span className="font-extrabold text-blue-900 text-xs md:text-sm">ريال</span>
+                      </div>
+                    </td>
+                    <td className="border border-black p-1 md:p-2 font-bold text-right">الوزن الفعلي</td>
+                    <td className="border border-black p-1 md:p-2 text-center">
+                      <input
+                        name="emptyWeight"
+                        type="text"
+                        value={formData.emptyWeight || "0"}
+                        onChange={handleChange}
+                        className="w-full bg-transparent text-center border-none outline-none font-extrabold text-blue-900 text-xs md:text-sm"
+                        placeholder="0"
+                      />
+                    </td>
+                  </tr>
+                  <tr>
+                    <td className="border border-black p-1 md:p-2 font-bold text-right">الغرامة</td>
+                    <td className="border border-black p-1 md:p-2 text-center">
+                      <div className="flex items-center justify-center gap-1">
+                        <input
+                          name="penalty"
+                          type="number"
+                          value={formData.penalty || 0}
+                          onChange={handleChange}
+                          className="w-16 md:w-24 bg-transparent text-center border-none outline-none font-extrabold text-blue-900 text-xs md:text-sm"
+                          placeholder="0"
+                        />
+                        <span className="font-extrabold text-blue-900 text-xs md:text-sm">ريال</span>
+                      </div>
+                    </td>
+                    <td className="border border-black p-1 md:p-2 font-bold text-right">الوزن الزائد</td>
+                    <td className="border border-black p-1 md:p-2 text-center">
+                      <input
+                        name="overweight"
+                        type="text"
+                        value={formData.overweight || "0"}
+                        onChange={handleChange}
+                        className="w-full bg-transparent text-center border-none outline-none font-extrabold text-blue-900 text-xs md:text-sm"
+                        placeholder="0"
+                      />
+                    </td>
+                  </tr>
+                  <tr>
+                    <td className="border border-black p-1 md:p-2 font-bold text-right">الخصم</td>
+                    <td className="border border-black p-1 md:p-2 text-center">
+                      <div className="flex items-center justify-center gap-1">
+                        <input
+                          name="discount"
+                          type="number"
+                          value={formData.discount || 0}
+                          onChange={handleChange}
+                          className="w-16 md:w-24 bg-transparent text-center border-none outline-none font-extrabold text-blue-900 text-xs md:text-sm"
+                          placeholder="0"
+                        />
+                        <span className="font-extrabold text-blue-900 text-xs md:text-sm">ريال</span>
+                      </div>
+                    </td>
+                    <td className="border border-black p-1 md:p-2 font-bold text-right">المبلغ المستحق</td>
+                    <td className="border border-black p-1 md:p-2 text-center">
+                      <div className="flex items-center justify-center gap-1">
+                        <span className="font-extrabold text-blue-900 text-xs md:text-sm">
+                          {formatCurrency(formData.payableAmount || 0)}
+                        </span>
+                        <span className="font-extrabold text-blue-900 text-xs md:text-sm">ريال</span>
+                      </div>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td className="border border-black p-1 md:p-2 font-bold text-right">النوع</td>
+                    <td className="border border-black p-1 md:p-2 text-center">
+                      <input
+                        name="type"
+                        value={formData.type || ""}
+                        onChange={handleChange}
+                        className="w-full bg-transparent text-center border-none outline-none font-extrabold text-blue-900 text-xs md:text-sm"
+                        placeholder="أدخل النوع"
+                      />
+                    </td>
+                    <td className="border border-black p-1 md:p-2 font-bold text-right">المبلغ الصافي</td>
+                    <td className="border border-black p-1 md:p-2 text-center">
+                      <div className="flex items-center justify-center gap-1">
+                        <span className="font-extrabold text-blue-900 text-xs md:text-sm">{formatCurrency(formData.netAmount || 0)}</span>
+                        <span className="font-extrabold text-blue-900 text-xs md:text-sm">ريال</span>
+                      </div>
+                    </td>
+                  </tr>
 
-                <tr>
-                  <td colSpan={4} className="border border-black p-3 text-center text-xs leading-relaxed font-bold">
-                    {penaltyText}
-                  </td>
-                </tr>
+                  <tr>
+                    <td colSpan={4} className="border border-black p-2 md:p-3 text-center text-xs leading-relaxed font-bold">
+                      {penaltyText}
+                    </td>
+                  </tr>
 
-                <tr>
-                  <td className="border border-black p-2 font-bold text-right w-1/4">ملاحظة</td>
-                  <td colSpan={3} className="border border-black p-2 text-right">
-                    <textarea
-                      name="note"
-                      value={formData.note || ""}
-                      onChange={handleChange}
-                      className="w-full bg-transparent text-right border-none outline-none font-extrabold text-blue-900 resize-none"
-                      rows={2}
-                      placeholder="أدخل ملاحظة (اختياري)"
-                    />
-                  </td>
-                </tr>
-              </tbody>
-            </table>
+                  <tr>
+                    <td className="border border-black p-1 md:p-2 font-bold text-right w-1/4">ملاحظة</td>
+                    <td colSpan={3} className="border border-black p-1 md:p-2 text-right">
+                      <textarea
+                        name="note"
+                        value={formData.note || ""}
+                        onChange={handleChange}
+                        className="w-full bg-transparent text-right border-none outline-none font-extrabold text-blue-900 resize-none text-xs md:text-sm"
+                        rows={2}
+                        placeholder="أدخل ملاحظة (اختياري)"
+                      />
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
 
-            <div className="border border-black p-3 text-center text-sm bg-gray-50">
+            <div className="border border-black p-2 md:p-3 text-center text-xs md:text-sm bg-gray-50">
               تحت إشراف مكتب وزارة النقل بالوادي والصحراء
             </div>
 
-            <div className="grid grid-cols-3 gap-4 mt-6">
+            <div className="grid grid-cols-3 gap-2 md:gap-4 mt-4 md:mt-6">
               <div className="text-center">
-                <p className="text-sm font-bold mb-1">اسم المستخدم</p>
-                <p className="text-xs mb-10">{collectorName}</p>
+                <p className="text-xs md:text-sm font-bold mb-1">اسم المستخدم</p>
+                <p className="text-xs mb-6 md:mb-10">{collectorName}</p>
               </div>
 
               <div className="text-center">
-                <p className="text-sm font-bold mb-12">التوقيع</p>
+                <p className="text-xs md:text-sm font-bold mb-6 md:mb-12">التوقيع</p>
               </div>
 
               <div className="text-center">
-                <p className="text-sm font-bold mb-12">الختم</p>
+                <p className="text-xs md:text-sm font-bold mb-6 md:mb-12">الختم</p>
               </div>
             </div>
           </div>
         </Card>
 
-        <div className="flex gap-3 justify-start">
-          <Button type="submit" disabled={isSubmitting} className="gap-2">
+        <div className="flex gap-2 md:gap-3 justify-start flex-wrap">
+          <Button type="submit" disabled={isSubmitting} className="gap-2 text-sm md:text-base">
             <Save className="h-4 w-4" />
             {isSubmitting ? "جاري الحفظ..." : "حفظ الفاتورة"}
           </Button>
-          <Button type="button" variant="outline" onClick={onCancel}>
+          <Button type="button" variant="outline" onClick={onCancel} className="text-sm md:text-base">
             <ArrowLeft className="h-4 w-4 ml-2" />
             إلغاء
           </Button>

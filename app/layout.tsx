@@ -2,7 +2,7 @@ import type React from "react"
 import type { Metadata } from "next"
 import { Viewport } from 'next'
 import "./globals.css"
-
+import { Toaster } from "sonner"
 import { Vazirmatn } from "next/font/google"
 
 
@@ -38,7 +38,16 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="ar" dir="rtl">
-      <body className={`font-sans ${_vazir.className}`}>{children}</body>
+      <body className={`font-sans ${_vazir.className}`}>
+        {children}
+
+          <Toaster 
+          position="top-right"
+          richColors
+          closeButton
+          duration={4000}
+        />
+      </body>
     </html>
   )
 }

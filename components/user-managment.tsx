@@ -7,7 +7,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
-import { v4 as uuidv4 } from "uuid";
 
 import {
   Table,
@@ -22,7 +21,6 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import { Plus, Trash2, Shield, ArrowRight, Lock, Loader2 } from "lucide-react";
 import { AdminFields } from "./admin-fields";
@@ -124,7 +122,7 @@ export function UserManagement({ onClose }: UserManagementProps) {
       setName("");
       setNewPassword("");
     } catch (error) {
-      console.error("خطأ في إضافة المستخدم:", error);
+      console.log("خطأ في إضافة المستخدم:", error);
       alert("حدث خطأ أثناء إضافة المستخدم.");
     } finally {
       setIsAddingUser(false);
@@ -150,7 +148,7 @@ export function UserManagement({ onClose }: UserManagementProps) {
         await HybridStorage.deleteUser(userId);
         await fetchUsers(); // Refresh list
       } catch (error) {
-        console.error("خطأ في حذف المستخدم:", error);
+        console.log("خطأ في حذف المستخدم:", error);
         alert("حدث خطأ أثناء حذف المستخدم.");
       }
     }
@@ -179,7 +177,7 @@ export function UserManagement({ onClose }: UserManagementProps) {
       setSelectedUser(null);
       setSelectedPermissions([]);
     } catch (error) {
-      console.error("Failed to update permissions:", error);
+      console.log("Failed to update permissions:", error);
       alert("حدث خطأ أثناء حفظ الصلاحيات");
     } finally {
       setIsUpdatingPermissions(false);

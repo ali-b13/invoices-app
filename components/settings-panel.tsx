@@ -72,7 +72,7 @@ export function SettingsPanel({ onSave, onClose }: SettingsPanelProps) {
       
       onSave();
     } catch (error) {
-      console.error("خطأ في حفظ الإعدادات:", error);
+      console.log("خطأ في حفظ الإعدادات:", error);
       alert("حدث خطأ أثناء حفظ الإعدادات");
     } finally {
       setIsSaving(false);

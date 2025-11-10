@@ -15,7 +15,7 @@ const buttonVariants = cva(
 
         // Uses --input (border), --background, --accent, --accent-foreground
         outline:
-          "border border-input bg-background hover:bg-accent hover:text-accent-foreground",
+          "border border-input  bg-background hover:bg-accent hover:text-accent-foreground",
 
         // Uses --secondary and --secondary-foreground
         secondary:
