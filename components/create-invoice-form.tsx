@@ -317,7 +317,6 @@ export function CreateInvoiceForm({ onSave, onCancel, initialData }: CreateInvoi
                           }))
                         }
                         className="w-full bg-transparent text-center border-none outline-none font-extrabold text-blue-900 text-xs md:text-sm"
-                        readOnly
                       />
                     </td>
                     <td className="border border-black p-1 md:p-2 font-bold text-right w-1/4">التاريخ والوقت</td>
